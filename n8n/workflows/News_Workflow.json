@@ -1,0 +1,214 @@
+{
+  "name": "News Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -300
+      ],
+      "id": "bc8f7be2-c7e7-4df9-80c0-12ec0c437d55",
+      "name": "When clicking ‘Test workflow’",
+      "notes": "AI"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        -20
+      ],
+      "id": "c32d1495-23ba-41a8-be4b-24ace0bb78ff",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "category",
+              "value": "technology"
+            },
+            {
+              "name": "apiKey",
+              "value": "8589f35aad5944608d2be5283921beda"
+            },
+            {
+              "name": "sortBy",
+              "value": "relevancy"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        -280
+      ],
+      "id": "2bc6fea0-32ee-47de-9577-50084e32569f",
+      "name": "HTTP Request",
+      "notes": "API KEY: 8589f35aad5944608d2be5283921beda"
+    },
+    {
+      "parameters": {
+        "content": "## TOP Headlines\n",
+        "height": 240,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -340
+      ],
+      "id": "f457f2eb-795d-4623-889f-96fe96117561",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "const articles = $input.all();\nconst formattedMessages = [];\n\nfor (const articleItem of articles) {\n  const article = articleItem.json; //Convert to JSON\n\n  const title = article.title;\n  let description = article.description || \"No Description\";\n  const url = article.url || \"#\";\n  const author = article.author || \"Unknown Author\";\n  const publishedAt = article.publishedAt ? new Date(article.publishedAt).toLocaleDateString(\"en\") : \"-\";\n\n  if (!title || description.length < 50) {\n    continue;\n  }\n\n  const summaryLenght = 250;\n  if (description.length > summaryLenght) {\n    description = description.substring(0, summaryLenght)\n    const lastSpace = description.lastIndexOf(\" \");\n\n    if (lastSpace !== -1 && lastSpace < summaryLenght - 10) {\n      description = description.substring(0, lastSpace)\n    }\n    description += \"...\"\n  }\n\n  const formattedArticle = `**${title}**\n**Author:** ${author}\n**Published At:** ${publishedAt}\n${description}\n[Read More](${url})\n  `\n\n  formattedMessages.push(formattedArticle)\n}\n\n/*return [{\n  json: {\n    allFormattedNews: formattedMessages.join('\\n')\n  }\n}];*/\n\n\n/*** Saída para arquivo binário*/\nconst finalFormattedMessages = formattedMessages.join('\\n\\n');\n\n//Creating Binaries\nconst buf = Buffer.from(finalFormattedMessages, 'utf8');\nconst fileName = `noticias_do_dia_${new Date().toLocaleDateString('en')}.txt`\nconst mimeType = 'Text/plain'\n\nreturn [{\n  json: {\n    message: \"File generated!\",\n    fileName: fileName\n  },\n  binary: {\n    newsFile: {\n      fileName: fileName,\n      mimeType: mimeType,\n      data: buf.toString('base64')\n    }\n  }\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        -280
+      ],
+      "id": "f1049d4c-663f-4c55-b5f2-6b54104da7d2",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "articles",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        600,
+        -280
+      ],
+      "id": "294e528a-fcb5-4c49-ac5b-ff63956c851d",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $json.fileName }}",
+        "dataPropertyName": "newsFile",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -440
+      ],
+      "id": "31e93ccd-93e1-4503-b371-e81e9c27fb9a",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        -120
+      ],
+      "id": "94703aad-ba4b-4166-9890-a0a1060c37c4",
+      "name": "Gmail",
+      "webhookId": "03e74249-c34b-4a0a-b1bb-317bc187ae71"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b0374bc9-ef6d-4633-acb4-8f80481334be",
+  "meta": {
+    "instanceId": "87e2672599e09e47149205d4b688347d3076f2e32fa3fc279aadb45fb8ffbd91"
+  },
+  "id": "XzHtsJzzHPTZVqV9",
+  "tags": []
+}

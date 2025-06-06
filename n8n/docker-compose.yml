@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    ports:
+      - "7856:7856"
+    volumes:
+      - ./data:/home/node/.n8n
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=7856
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      #- N8N_ENCRYPTION_KEY=sua_chave_de_criptografia_aqui # MUDE ISSO PARA UMA CHAVE FORTE E ÚNICA!
+      #- GENERIC_TIMEZONE=America/Sao_Paulo # Ou sua timezone preferida
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=n8nuser
+      - N8N_BASIC_AUTH_PASSWORD=n8npassword # MUDE ISSO PARA UMA SENHA FORTE E ÚNICA!
+      # Opções avançadas (descomente e configure conforme necessário)
+      # - N8N_EDITOR_BASE_URL=http://localhost:5678/
+      # - N8N_DEFAULT_EMAIL_SENDER_NAME=n8n
+      # - N8N_DEFAULT_EMAIL_SENDER_ADDRESS=n8n@example.com
+      # - N8N_EMAIL_SMTP_HOST=smtp.example.com
+      # - N8N_EMAIL_SMTP_PORT=587
+      # - N8N_EMAIL_SMTP_USER=user@example.com
+      # - N8N_EMAIL_SMTP_PASSWORD=smtp_password
+      # - N8N_EMAIL_SMTP_SSL=true
+      # - N8N_EXTERNAL_URL=http://localhost:5678/
+      # - N8N_DIAGNOSTICS_ENABLED=true # Envia dados anônimos de uso para o n8n.cloud
+      # - N8N_LOG_LEVEL=info # trace, debug, info, warn, error, fatal
+      # - N8N_LOG_OUTPUT=console # file, console
+      # - N8N_LOG_FILE_PATH=/home/node/.n8n/logs/n8n.log
+      # - N8N_MAX_CONCURRENT_FLOWS=10
+      # - N8N_WORKFLOW_EXECUTION_TIMEOUT=300000 # 5 minutos em ms
+    networks:
+    - n8n_network
+
+networks:
+  n8n_network:
+    driver: bridge
